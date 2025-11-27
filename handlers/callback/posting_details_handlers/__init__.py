@@ -1,0 +1,1 @@
+from .posting_details import router

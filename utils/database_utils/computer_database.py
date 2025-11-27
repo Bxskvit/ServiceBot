@@ -150,3 +150,13 @@ class AsyncComputersRepository(AsyncDatabase):
             post_id (int): ID of the post to delete.
         """
         await self.delete(self.TABLE, "Post_id = ?", (post_id,))
+
+    async def get_all_post_ids(self) -> List[int]:
+        """
+        Fetch all Post_id values from the Computers table.
+
+        Returns:
+            List[int]: List of all post IDs.
+        """
+        rows = await self.fetchall("SELECT Post_id FROM Computers")
+        return [row[0] for row in rows]  # extract the first element of each row
