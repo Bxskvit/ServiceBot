@@ -1,6 +1,7 @@
 import aiosqlite
 from typing import Any, List, Tuple, Optional
 from config import get_db_path
+import csv
 
 
 class AsyncDatabase:
@@ -152,4 +153,28 @@ class AsyncDatabase:
         query = f"DELETE FROM {table_name} WHERE {condition}"
         await self.execute(query, params)
 
+    async def export_table_to_csv(self, table_name: str, csv_path: str) -> str:
+        """
+        Export an entire table to a CSV file.
+
+        Args:
+            table_name (str): Name of the table to export.
+            csv_path (str): File path where CSV will be saved.
+
+        Returns:
+            str: The file path to the created CSV.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(f"SELECT * FROM {table_name}")
+            rows = await cursor.fetchall()
+            col_names = [description[0] for description in cursor.description]
+            await cursor.close()
+
+        # Write the CSV file
+        with open(csv_path, "w", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow(col_names)
+            writer.writerows(rows)
+
+        return csv_path
 

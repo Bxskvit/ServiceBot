@@ -20,8 +20,12 @@ async def add_load(callback: CallbackQuery):
         str(post["post_id"]): formatted_posts[i]  # key=callback_data, value=button text
         for i, post in enumerate(postings)
     }
-
     kb = create_inline_kb(width=1, **kwargs)
+
+    back_kb = create_inline_kb(1, "go_back")
+
+    kb.inline_keyboard.extend(back_kb.inline_keyboard)
+    await callback.message.delete()
     await callback.answer()
     await callback.message.answer(f"Here are available options.\n", reply_markup=kb, parse_mode='html')
 
