@@ -1,45 +1,91 @@
 
-def format_computer_description_message(computer: tuple) -> str:
+def format_computer_description_message(
+    item: tuple,
+    item_type: str,
+    added_price: float = None,
+    real_price: float = None,
+    notes: str = None
+) -> str:
     """
-    Takes a single computer row as a tuple and returns a nicely formatted message.
-    Column order must match your CREATE TABLE order.
+    Format a PC, Laptop, or Part row into a Telegram-friendly message.
+
+    Args:
+        item (tuple): Row from the corresponding table.
+        item_type (str): 'PC', 'Laptop', or 'Part'.
+        added_price (float, optional): Listing added price.
+        real_price (float, optional): Listing real price.
+        notes (str, optional): Notes from the listing.
+
+    Returns:
+        str: Formatted message.
     """
-    (
-        Post_id, Title, Description, Type, CPU, CPU_Fan, Motherboard, GPU,
-        RAM, Storage, PSU, PC_Case, Screen_Size, Display_Type, OS,
-        Connectivity, Ports, Weight, Battery, Price, Best_Usage,
-        Additional_Info, Post_Date
-    ) = computer
 
-    message = f"<b>{Title}</b>\n"
+    message_lines = []
 
-    if Description:
-        message += f"{Description}\n\n"
+    # Basic title
+    title = item[1] if item else "Unknown"
+    message_lines.append(f"<b>{title}</b>")
 
-    message += f"<b>Type:</b> {Type}\n"
-    message += f"<b>CPU:</b> {CPU}\n"
-    message += f"<b>CPU Fan:</b> {CPU_Fan or '-'}\n"
-    message += f"<b>Motherboard:</b> {Motherboard or '-'}\n"
-    message += f"<b>GPU:</b> {GPU or '-'}\n"
-    message += f"<b>RAM:</b> {RAM or '-'}\n"
-    message += f"<b>Storage:</b> {Storage or '-'}\n"
-    message += f"<b>PSU:</b> {PSU or '-'}\n"
-    message += f"<b>Case:</b> {PC_Case or '-'}\n"
+    # Optional notes / description
+    if notes:
+        message_lines.append(f"{notes}\n")
 
-    if Screen_Size or Display_Type:
-        message += f"<b>Display:</b> {Screen_Size or '-'}{'\"' if Screen_Size else ''} {Display_Type or ''}\n"
+    # Type
+    message_lines.append(f"<b>Type:</b> {item_type}")
 
-    message += f"<b>OS:</b> {OS or '-'}\n"
-    message += f"<b>Connectivity:</b> {Connectivity or '-'}\n"
-    message += f"<b>Ports:</b> {Ports or '-'}\n"
-    message += f"<b>Weight:</b> {Weight or '-'}\n"
-    message += f"<b>Battery:</b> {Battery or '-'}\n"
-    message += f"<b>Best Usage:</b> {Best_Usage or '-'}\n"
+    # Type-specific fields
+    if item_type == "PC":
+        (
+            PC_Id, Title, CPU_Id, GPU_Id, RAM_Id, SSD_Id, HDD_Id, PSU_Id,
+            Motherboard_Id, Case_Id, Cooler_Id, Fan_Id, Photo_URL,
+            Description, Notes_field, Condition, Created_At
+        ) = item
 
-    if Additional_Info:
-        message += f"<b>Additional Info:</b> {Additional_Info}\n"
+        message_lines.append(f"<b>Condition:</b> {Condition}")
+        message_lines.append(f"<b>CPU ID:</b> {CPU_Id}")
+        message_lines.append(f"<b>GPU ID:</b> {GPU_Id}")
+        message_lines.append(f"<b>RAM ID:</b> {RAM_Id}")
+        message_lines.append(f"<b>Storage SSD ID:</b> {SSD_Id}")
+        message_lines.append(f"<b>Storage HDD ID:</b> {HDD_Id}")
+        message_lines.append(f"<b>PSU ID:</b> {PSU_Id}")
+        message_lines.append(f"<b>Motherboard ID:</b> {Motherboard_Id}")
+        message_lines.append(f"<b>Case ID:</b> {Case_Id}")
+        message_lines.append(f"<b>Cooler ID:</b> {Cooler_Id}")
+        message_lines.append(f"<b>Fan ID:</b> {Fan_Id}")
 
-    message += f"\n💰 <b>Price:</b> ${Price}\n"
-    message += f"<i>Posted on: {Post_Date}</i>"
+    elif item_type == "Laptop":
+        (
+            Laptop_Id, Title, CPU_Id, GPU_Id, RAM_Id, SSD_Id, HDD_Id, Motherboard_Id,
+            Battery_Id, Keyboard_Id, Touchpad_Id, Display_Id, Charger_Id, Webcam_Id,
+            Case_Panel_Id, Photo_URL, Description, Notes_field, Condition, Created_At
+        ) = item
 
-    return message
+        message_lines.append(f"<b>Condition:</b> {Condition}")
+        message_lines.append(f"<b>CPU ID:</b> {CPU_Id}")
+        message_lines.append(f"<b>GPU ID:</b> {GPU_Id}")
+        message_lines.append(f"<b>RAM ID:</b> {RAM_Id}")
+        message_lines.append(f"<b>Storage SSD ID:</b> {SSD_Id}")
+        message_lines.append(f"<b>Storage HDD ID:</b> {HDD_Id}")
+        message_lines.append(f"<b>Motherboard ID:</b> {Motherboard_Id}")
+        message_lines.append(f"<b>Battery ID:</b> {Battery_Id}")
+        message_lines.append(f"<b>Keyboard ID:</b> {Keyboard_Id}")
+        message_lines.append(f"<b>Touchpad ID:</b> {Touchpad_Id}")
+        message_lines.append(f"<b>Display ID:</b> {Display_Id}")
+        message_lines.append(f"<b>Charger ID:</b> {Charger_Id}")
+        message_lines.append(f"<b>Webcam ID:</b> {Webcam_Id}")
+        message_lines.append(f"<b>Case Panel ID:</b> {Case_Panel_Id}")
+
+    elif item_type == "Part":
+        # For parts, just show name / type / condition if available
+        (
+            Part_Id, Title, Part_Type, Condition, Listed_Price,
+            Bought_Price, Link, Contact_Info, Created_At
+        ) = item
+
+        message_lines.append(f"<b>Condition:</b> {Condition}")
+        message_lines.append(f"<b>Part Type:</b> {Part_Type}")
+        message_lines.append(f"<b>Link:</b> {Link or '-'}")
+        message_lines.append(f"<b>Contact Info:</b> {Contact_Info or '-'}")
+        message_lines.append(f"💰 <b>Added Price:</b> ${added_price}")
+
+    return "\n".join(message_lines)

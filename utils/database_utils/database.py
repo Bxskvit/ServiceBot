@@ -177,4 +177,3 @@ class AsyncDatabase:
             writer.writerows(rows)
 
         return csv_path
-

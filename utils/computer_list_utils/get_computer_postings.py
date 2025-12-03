@@ -1,48 +1,68 @@
-from typing import List, Dict
-from utils.database_utils import AsyncComputersRepository
-from typing import Optional
+from typing import List, Dict, Optional
+from utils.database_utils import (
+    AsyncListingsRepository,
+    AsyncPCsRepository,
+    AsyncLaptopsRepository,
+    AsyncPartsRepository
+)
 
 
-async def get_postings(db: Optional[AsyncComputersRepository] = None, db_path: Optional[str] = None) -> List[Dict]:
+async def get_postings(
+    db: Optional[AsyncListingsRepository] = None,
+    db_path: Optional[str] = None,
+    item_type: Optional[str] = None
+) -> List[Dict]:
     """
-    Fetch all computers with only the main fields needed for posting.
+    Fetch listings with titles from the appropriate table depending on item_type.
 
     Args:
-        db (AsyncComputersRepository): Repository for the Computers table.
-        db_path (Str): Path to database
+        db (Optional[AsyncListingsRepository]): Existing Listings repo instance.
+        db_path (Optional[str]): Path to the database if db is None.
+        item_type (Optional[str]): Filter by 'PC', 'Laptop', or 'Part'. Fetch all if None.
 
     Returns:
-        List[Dict]: Each dict contains main computer info for posting.
+        List[Dict]: Listings with main fields + title.
     """
 
+    # Initialize Listings repo if not provided
     if db is None:
-        db: AsyncComputersRepository = AsyncComputersRepository(db_path)
+        db = AsyncListingsRepository(db_path)
+
+    # Fetch listings, optionally filtered by type
+    if item_type:
+        listings = await db.get_listings_by_type(item_type)
     else:
-        db: AsyncComputersRepository = db
+        listings = await db.get_all_listings()
 
-    query = """
-        SELECT Post_id, Title, Type, CPU, GPU, RAM, Storage, Price, Screen_Size, OS, Best_Usage, Description, Additional_Info
-        FROM Computers
-    """
-    rows = await db.fetchall(query)
+    # Initialize repositories for each item type
+    pc_repo = AsyncPCsRepository(db_path)
+    laptop_repo = AsyncLaptopsRepository(db_path)
+    parts_repo = AsyncPartsRepository(db_path)
 
-    computers = [
-        {
-            "post_id": row[0],
-            "title": row[1],
-            "type": row[2],
-            "cpu": row[3],
-            "gpu": row[4],
-            "ram": row[5],
-            "storage": row[6],
-            "price": row[7],
-            "screen_size": row[8],
-            "os": row[9],
-            "best_usage": row[10],
-            "description": row[11],
-            "additional_info": row[12],
-        }
-        for row in rows
-    ]
+    result = []
 
-    return computers
+    for listing in listings:
+        listing_id, item_type, item_id, added_price, real_price, notes, created_at = listing
+
+        # Fetch title from the corresponding repository
+        title = "Unknown"
+        if item_type == "PC":
+            item = await pc_repo.get_pc(item_id)
+            title = item[1] if item else "Unknown PC"
+        elif item_type == "Laptop":
+            item = await laptop_repo.get_laptop(item_id)
+            title = item[1] if item else "Unknown Laptop"
+        elif item_type == "Part":
+            item = await parts_repo.get_part(item_id)
+            title = item[1] if item else "Unknown Part"
+
+        result.append({
+            "listing_id": listing_id,
+            "item_type": item_type,
+            "added_price": added_price,
+            "real_price": real_price,
+            "title": title,
+        })
+
+    return result
+

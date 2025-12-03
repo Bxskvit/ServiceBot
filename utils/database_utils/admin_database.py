@@ -1,91 +1,76 @@
-from .database import AsyncDatabase
-from typing import Optional, Tuple, List, Any
+from typing import Optional, List, Tuple
+from utils.database_utils import AsyncDatabase
 
 
 class AsyncAdminsRepository(AsyncDatabase):
     """
     Repository for interacting with the `Admins` table.
-
-    This class provides high-level, typed methods for reading and modifying
-    administrator records without writing raw SQL in the rest of the project.
-
-    Inherits:
-        AsyncDatabase – asynchronous base class providing generic
-        CRUD operations and query helpers.
     """
 
-    TABLE = "Admins"
+    TABLE_NAME = "Admins"
 
-    async def get_admin(self, user_id: int) -> Optional[Tuple]:
+    async def create_admin(
+        self,
+        user_id: int,
+        admin_id: Optional[int],
+        admin_name: str,
+        access_level: int
+    ) -> None:
         """
-        Retrieve a single admin by user ID.
-
-        Args:
-            user_id (int): Telegram user ID.
-
-        Returns:
-            Optional[Tuple]: Row of the admin record,
-            or None if no such admin exists.
+        Insert a new admin into the Admins table.
         """
-        return await self.get_row(self.TABLE, "User_Id = ?", (user_id,))
+        columns = ["User_Id", "Admin_Id", "Admin_name", "Access_Level"]
+        values = (user_id, admin_id, admin_name, access_level)
+        await self.insert(self.TABLE_NAME, columns, values)
 
-    async def get_all_admins(self) -> List[Tuple[Any]]:
+    async def get_admin_by_user_id(self, user_id: int) -> Optional[Tuple]:
         """
-        Retrieve all admin records from the database.
-
-        Returns:
-            list[Tuple]: A list of all rows in the `Admins` table.
+        Get a single admin by User_Id.
         """
-        return await self.get_table(self.TABLE)
+        return await self.get_row(self.TABLE_NAME, "User_Id = ?", (user_id,))
 
-    async def add_admin(self, user_id: int, access_level: int, name: str = None) -> None:
+    async def get_admin_by_admin_id(self, admin_id: int) -> Optional[Tuple]:
         """
-        Add a new admin to the database.
-
-        Args:
-            user_id (int): Telegram user ID of the admin.
-            access_level (int): Access level (1, 2, or 3).
-            name (str, optional): Display name of the admin.
-
-        Returns:
-            None
+        Get a single admin by Admin_Id.
         """
-        await self.insert(
-            self.TABLE,
-            ["User_Id", "Name", "Access_Level"],
-            (user_id, name, access_level)
-        )
+        return await self.get_row(self.TABLE_NAME, "Admin_Id = ?", (admin_id,))
 
-    async def remove_admin(self, user_id: int) -> None:
+    async def get_all_admins(self) -> List[Tuple]:
         """
-        Remove an admin by user ID.
-
-        Args:
-            user_id (int): Telegram user ID to remove.
-
-        Returns:
-            None
+        Retrieve all admins.
         """
-        await self.delete(
-            self.TABLE,
-            "User_Id = ?",
-            (user_id,)
-        )
+        return await self.get_table(self.TABLE_NAME)
 
-    async def update_access(self, user_id: int, new_level: int) -> None:
+    async def update_admin(
+        self,
+        user_id: int,
+        admin_id: Optional[int] = None,
+        admin_name: Optional[str] = None,
+        access_level: Optional[int] = None
+    ) -> None:
         """
-        Update an admin's access level.
-
-        Args:
-            user_id (int): Telegram user ID.
-            new_level (int): New access level (1–3).
-
-        Returns:
-            None
+        Update admin fields. Only non-None fields will be updated.
         """
-        await self.update(
-            self.TABLE,
-            "Access_Level = ?",
-            "User_Id = ?",
-            (new_level, user_id)
-        )
+        updates = []
+        params = []
+
+        if admin_id is not None:
+            updates.append("Admin_Id = ?")
+            params.append(admin_id)
+        if admin_name is not None:
+            updates.append("Admin_name = ?")
+            params.append(admin_name)
+        if access_level is not None:
+            updates.append("Access_Level = ?")
+            params.append(access_level)
+
+        if updates:
+            update_str = ", ".join(updates)
+            params.append(user_id)
+            await self.update(self.TABLE_NAME, update_str, "User_Id = ?", tuple(params))
+
+    async def delete_admin(self, user_id: int) -> None:
+        """
+        Delete an admin by User_Id.
+        """
+        await self.delete(self.TABLE_NAME, "User_Id = ?", (user_id,))

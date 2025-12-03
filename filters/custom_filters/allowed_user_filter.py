@@ -40,10 +40,10 @@ class AllowedUserFilter(BaseFilter):
         user_id = message.from_user.id
 
         # Check Users table
-        user = await self.users_repo.get_user(user_id)
+        user = await self.users_repo.get_user_by_id(user_id)
         if user is not None:
             return True
 
         # Check Admins table
-        admin = await self.admins_repo.get_admin(user_id)
+        admin = await self.admins_repo.get_admin_by_user_id(user_id)
         return admin is not None
