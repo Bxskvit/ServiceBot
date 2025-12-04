@@ -7,12 +7,21 @@ from keyboards.kb_generator import create_inline_kb
 
 router = Router()
 
-kb = create_inline_kb(2, "go_back", "bid")
-
 
 @router.callback_query(PostIDFilter())  # dynamically checks if callback is a valid listing ID
 async def handle_post_id(callback: CallbackQuery):
     listing_id = int(callback.data)
+
+    kwargs = {
+        f"bid:{listing_id}": "Bid"
+    }
+    kb = create_inline_kb(width=1, **kwargs)  # main bid button
+
+    # Create back button keyboard
+    back_kb = create_inline_kb(1, "go_back")
+
+    # Merge back button row into main kb
+    kb.inline_keyboard.extend(back_kb.inline_keyboard)
 
     # Initialize repositories
     listings_repo = AsyncListingsRepository()

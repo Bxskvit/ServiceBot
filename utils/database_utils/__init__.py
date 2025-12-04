@@ -6,6 +6,7 @@ from .listing_database import AsyncListingsRepository
 from .laptop_database import AsyncLaptopsRepository
 from .part_database import AsyncPartsRepository
 from .order_database import AsyncOrdersRepository
+from .bid_database import AsyncBidsRepository
 
 __all__ = [
     "AsyncDatabase",
@@ -16,4 +17,5 @@ __all__ = [
     "AsyncLaptopsRepository",
     "AsyncPartsRepository",
     "AsyncOrdersRepository",
+    "AsyncBidsRepository",
 ]
